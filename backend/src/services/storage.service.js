@@ -1,33 +1,36 @@
-// ImageKit upload service (@imagekit/nodejs v7)
+// ImageKit service
+//
+// Video ab browser se SEEDHA ImageKit par upload hoti hai (Vercel functions
+// 4.5 MB se badi request accept nahi karte). Backend sirf ek short-lived
+// signature deta hai, taaki private key kabhi frontend tak na jaaye.
+const crypto = require("crypto");
 const imagekitModule = require("@imagekit/nodejs");
 
 const ImageKit = imagekitModule.ImageKit || imagekitModule.default || imagekitModule;
-const toFile = imagekitModule.toFile;
 
 let client;
 function getClient() {
-    if (!client) {
-        // v7 SDK ko upload ke liye sirf private key chahiye
-        client = new ImageKit({ privateKey: process.env.IMAGEKIT_PRIVATE_KEY });
-    }
+    if (!client) client = new ImageKit({ privateKey: process.env.IMAGEKIT_PRIVATE_KEY });
     return client;
 }
 
-/**
- * @param {Buffer} buffer   multer memoryStorage ka file.buffer
- * @param {string} fileName unique file name
- * @returns {Promise<{url: string, fileId: string}>}
- */
-async function uploadFile(buffer, fileName) {
-    const file = toFile ? await toFile(buffer, fileName) : buffer.toString("base64");
+// ImageKit client-side upload ke liye auth params
+// signature = HMAC-SHA1(privateKey, token + expire)
+function getUploadAuth() {
+    const token = crypto.randomUUID();
+    const expire = Math.floor(Date.now() / 1000) + 30 * 60; // 30 min (1 ghante se kam hona chahiye)
+    const signature = crypto
+        .createHmac("sha1", process.env.IMAGEKIT_PRIVATE_KEY)
+        .update(token + expire)
+        .digest("hex");
 
-    const result = await getClient().files.upload({
-        file,
-        fileName,
-        folder: "/food-view",
-    });
+    return { token, expire, signature, publicKey: process.env.IMAGEKIT_PUBLIC_KEY };
+}
 
-    return { url: result.url, fileId: result.fileId };
+// Check ki URL sach me hamare ImageKit account ka hai
+function isOwnImageKitUrl(url) {
+    const endpoint = (process.env.IMAGEKIT_URL_ENDPOINT || "").replace(/\/+$/, "");
+    return typeof url === "string" && endpoint && url.startsWith(endpoint + "/");
 }
 
 async function deleteFile(fileId) {
@@ -39,4 +42,4 @@ async function deleteFile(fileId) {
     }
 }
 
-module.exports = { uploadFile, deleteFile };
+module.exports = { getUploadAuth, isOwnImageKitUrl, deleteFile };

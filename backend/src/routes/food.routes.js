@@ -1,24 +1,14 @@
 const express = require("express");
-const multer = require("multer");
 const foodController = require("../controllers/food.controller");
 const { authFoodPartnerMiddleware, authUserMiddleware } = require("../middlewares/auth.middleware");
 
 const router = express.Router();
 
-// File memory me rahegi, wahan se seedha ImageKit par upload hogi
-const upload = multer({
-    storage: multer.memoryStorage(),
-    limits: { fileSize: 100 * 1024 * 1024 }, // 100 MB
-    fileFilter: (req, file, cb) => {
-        if (file.mimetype.startsWith("video/")) return cb(null, true);
-        const err = new Error("Only video files are allowed");
-        err.status = 400;
-        cb(err);
-    },
-});
+/* GET /api/food/upload-auth — ImageKit par direct upload ke liye signature */
+router.get("/upload-auth", authFoodPartnerMiddleware, foodController.getUploadAuth);
 
-/* POST /api/food — food partner naya reel upload kare */
-router.post("/", authFoodPartnerMiddleware, upload.single("video"), foodController.createFood);
+/* POST /api/food — { name, description, video, videoFileId } (video = ImageKit URL) */
+router.post("/", authFoodPartnerMiddleware, foodController.createFood);
 
 /* GET /api/food — user ka reels feed */
 router.get("/", authUserMiddleware, foodController.getFoodItems);

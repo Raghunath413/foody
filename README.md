@@ -5,7 +5,7 @@ Zomato/Instagram-reels style app: food partners (restaurants) short food videos 
 ## Features
 - **User auth**: register / login / logout (JWT in httpOnly cookie, bcrypt password hash)
 - **Food partner auth**: alag register / login (business name, contact, phone, address)
-- **Upload reel** (partner): video → Multer (memory) → ImageKit → URL MongoDB me
+- **Upload reel** (partner): backend signature deta hai → video browser se seedha ImageKit par → URL MongoDB me
 - **Reels feed** (user): vertical snap-scroll, jo video screen par ho wahi auto-play
 - **Like / Save** (toggle) with counts, **Saved** page
 - **Partner profile**: total meals, total likes, video grid; owner apne reels delete kar sakta hai
@@ -39,7 +39,6 @@ npm run dev               # http://localhost:3000
 ### 2. Frontend
 ```bash
 cd frontend
-cp .env.example .env      # VITE_API_URL=http://localhost:3000
 npm install
 npm run dev               # http://localhost:5173
 ```
@@ -55,7 +54,8 @@ npm run dev               # http://localhost:5173
 | POST | `/api/auth/food-partner/login` | – | `email, password` |
 | GET | `/api/auth/food-partner/logout` | – | |
 | GET | `/api/auth/me` | – | current role + account |
-| POST | `/api/food` | partner | multipart: `name, description, video` |
+| GET | `/api/food/upload-auth` | partner | ImageKit upload signature |
+| POST | `/api/food` | partner | JSON: `name, description, video (URL), videoFileId` |
 | GET | `/api/food` | user | reels feed (with `isLiked`, `isSaved`) |
 | POST | `/api/food/like` | user | `foodId` (toggle) |
 | POST | `/api/food/save` | user | `foodId` (toggle) |
@@ -65,3 +65,10 @@ npm run dev               # http://localhost:5173
 
 ## Frontend routes
 `/register`, `/user/register`, `/user/login`, `/food-partner/register`, `/food-partner/login`, `/` (feed), `/saved`, `/food-partner/dashboard`, `/create-food`, `/food-partner/:id`
+
+## Deploy (Vercel Services: frontend + backend ek hi project me)
+1. Repo ke root me `vercel.json` hona chahiye (diya hua hai). Push karo.
+2. Vercel → New Project → repo import → Application Preset: **Services**.
+3. Environment Variables: `MONGO_URI`, `JWT_SECRET`, `IMAGEKIT_PUBLIC_KEY`, `IMAGEKIT_PRIVATE_KEY`, `IMAGEKIT_URL_ENDPOINT`.
+4. MongoDB Atlas → Network Access → `0.0.0.0/0` allow karo.
+5. Deploy. Check: `https://<your-app>.vercel.app/api/health` → `{"status":"ok"}`

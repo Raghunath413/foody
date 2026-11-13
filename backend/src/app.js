@@ -1,6 +1,7 @@
 const express = require("express");
 const cookieParser = require("cookie-parser");
 const cors = require("cors");
+const connectDB = require("./db/db");
 
 const authRoutes = require("./routes/auth.routes");
 const foodRoutes = require("./routes/food.routes");
@@ -17,8 +18,19 @@ app.use(
 app.use(express.json());
 app.use(cookieParser());
 
-app.get("/", (req, res) => {
-    res.send("Food View API is running");
+app.get("/api/health", (req, res) => {
+    res.json({ status: "ok" });
+});
+
+// Har API request se pehle DB connection pakka karo (serverless ke liye zaroori)
+app.use("/api", async (req, res, next) => {
+    try {
+        await connectDB();
+        next();
+    } catch (err) {
+        console.error("MongoDB connection error:", err.message);
+        res.status(503).json({ message: "Database connection failed" });
+    }
 });
 
 app.use("/api/auth", authRoutes);
@@ -34,9 +46,6 @@ app.use((req, res) => {
 // eslint-disable-next-line no-unused-vars
 app.use((err, req, res, next) => {
     console.error(err);
-    if (err.name === "MulterError") {
-        return res.status(400).json({ message: err.message });
-    }
     res.status(err.status || 500).json({ message: err.message || "Internal server error" });
 });
 

@@ -1,24 +1,27 @@
-const { v4: uuid } = require("uuid");
-const path = require("path");
 const foodModel = require("../models/food.model");
 const likeModel = require("../models/likes.model");
 const saveModel = require("../models/save.model");
 const storageService = require("../services/storage.service");
 
-// POST /api/food  (food partner) — multipart/form-data: name, description, video
-async function createFood(req, res) {
-    const { name, description } = req.body || {};
-    if (!name) return res.status(400).json({ message: "Food name is required" });
-    if (!req.file) return res.status(400).json({ message: "Video file is required" });
+// GET /api/food/upload-auth  (food partner)
+function getUploadAuth(req, res) {
+    res.status(200).json(storageService.getUploadAuth());
+}
 
-    const ext = path.extname(req.file.originalname) || ".mp4";
-    const uploaded = await storageService.uploadFile(req.file.buffer, `${uuid()}${ext}`);
+// POST /api/food  (food partner) — JSON: name, description, video (ImageKit URL), videoFileId
+async function createFood(req, res) {
+    const { name, description, video, videoFileId } = req.body || {};
+    if (!name) return res.status(400).json({ message: "Food name is required" });
+    if (!video) return res.status(400).json({ message: "Video is required" });
+    if (!storageService.isOwnImageKitUrl(video)) {
+        return res.status(400).json({ message: "Invalid video URL" });
+    }
 
     const food = await foodModel.create({
         name,
         description,
-        video: uploaded.url,
-        videoFileId: uploaded.fileId,
+        video,
+        videoFileId,
         foodPartner: req.foodPartner._id,
     });
 
@@ -125,4 +128,4 @@ async function deleteFood(req, res) {
     res.status(200).json({ message: "Food deleted successfully" });
 }
 
-module.exports = { createFood, getFoodItems, likeFood, saveFood, getSavedFood, deleteFood };
+module.exports = { getUploadAuth, createFood, getFoodItems, likeFood, saveFood, getSavedFood, deleteFood };

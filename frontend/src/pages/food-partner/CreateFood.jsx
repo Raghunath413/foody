@@ -1,7 +1,10 @@
 import { useEffect, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
+import axios from "axios";
 import api, { errorMessage } from "../../api/axios.js";
 import "../../styles/create-food.css";
+
+const IMAGEKIT_UPLOAD_URL = "https://upload.imagekit.io/api/v1/files/upload";
 
 export default function CreateFood() {
     const navigate = useNavigate();
@@ -39,16 +42,34 @@ export default function CreateFood() {
     async function handleSubmit(e) {
         e.preventDefault();
         if (!file) return setError("Please choose a video");
-        const form = new FormData();
-        form.append("name", name);
-        form.append("description", description);
-        form.append("video", file);
 
         setError("");
         setLoading(true);
         try {
-            await api.post("/food", form, {
+            // 1) Backend se short-lived upload signature lo
+            const { data: auth } = await api.get("/food/upload-auth");
+
+            // 2) Video browser se seedha ImageKit par upload karo
+            const ext = file.name.includes(".") ? file.name.slice(file.name.lastIndexOf(".")) : ".mp4";
+            const ikForm = new FormData();
+            ikForm.append("file", file);
+            ikForm.append("fileName", `${crypto.randomUUID()}${ext}`);
+            ikForm.append("folder", "/food-view");
+            ikForm.append("publicKey", auth.publicKey);
+            ikForm.append("signature", auth.signature);
+            ikForm.append("expire", String(auth.expire));
+            ikForm.append("token", auth.token);
+
+            const { data: uploaded } = await axios.post(IMAGEKIT_UPLOAD_URL, ikForm, {
                 onUploadProgress: (p) => p.total && setProgress(Math.round((p.loaded * 100) / p.total)),
+            });
+
+            // 3) Sirf URL + details apne backend ko bhejo
+            await api.post("/food", {
+                name,
+                description,
+                video: uploaded.url,
+                videoFileId: uploaded.fileId,
             });
             navigate("/food-partner/dashboard");
         } catch (err) {
