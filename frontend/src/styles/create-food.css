@@ -1,0 +1,77 @@
+.create-food-page {
+    min-height: 100dvh;
+    display: flex;
+    justify-content: center;
+    padding: 24px 16px;
+}
+
+.create-food-card {
+    width: 100%;
+    max-width: 520px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 18px;
+    padding: 24px;
+    display: flex;
+    flex-direction: column;
+    gap: 18px;
+    align-self: flex-start;
+}
+
+.create-food-header h1 { font-size: 1.4rem; margin-top: 8px; }
+.create-food-header p { color: var(--muted); font-size: 0.9rem; margin-top: 4px; }
+
+.back-link {
+    background: none;
+    border: none;
+    color: var(--muted);
+    font-size: 0.9rem;
+}
+
+.create-food-form { display: flex; flex-direction: column; gap: 16px; }
+
+.file-drop {
+    border: 2px dashed var(--border);
+    border-radius: var(--radius);
+    min-height: 220px;
+    display: grid;
+    place-items: center;
+    cursor: pointer;
+    overflow: hidden;
+    background: var(--surface-2);
+    transition: border-color 0.15s;
+}
+.file-drop:hover { border-color: var(--primary); }
+.file-drop.has-file { border-style: solid; background: #000; }
+.file-drop-inner { display: flex; flex-direction: column; align-items: center; gap: 6px; color: var(--muted); padding: 24px; }
+.file-drop-inner strong { color: var(--text); }
+.file-drop-icon { font-size: 2.2rem; }
+.file-preview { width: 100%; max-height: 360px; object-fit: contain; }
+
+.file-meta {
+    display: flex;
+    gap: 12px;
+    align-items: center;
+    font-size: 0.85rem;
+    color: var(--muted);
+}
+.file-meta span:first-child { flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.file-meta button { background: none; border: none; color: var(--danger); }
+
+.progress {
+    position: relative;
+    height: 28px;
+    border-radius: 8px;
+    background: var(--surface-2);
+    overflow: hidden;
+    font-size: 0.8rem;
+    display: grid;
+    place-items: center;
+}
+.progress-bar {
+    position: absolute;
+    inset: 0 auto 0 0;
+    background: color-mix(in srgb, var(--primary) 45%, transparent);
+    transition: width 0.2s;
+}
+.progress span { position: relative; }
